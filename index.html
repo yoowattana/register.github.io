@@ -70,6 +70,16 @@
             }
         }
 
+        // ฟังก์ชันสำหรับแปลงไฟล์เป็น Base64
+        function toBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = (error) => reject(error);
+            });
+        }
+
         // ฟังก์ชันสำหรับส่งข้อมูล
         async function submitForm() {
             const fileInput = document.getElementById('file');
@@ -101,53 +111,43 @@
                 type: fileType
             };
 
-            // ส่งข้อมูลไปยัง Google Apps Script ผ่าน Webhook
-            fetch('https://script.google.com/macros/s/AKfycbzrqlbKKLKJ41hamxJfrcOEnoKMWFa-vZGtqZL7btvx7656rs-RZ62sHtBl-1HNirlY/exec', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-            })
-            .then(response => response.json())
-            .then(result => {
-                if (result.success) {
-                    // ล้างข้อมูลในฟอร์ม
-                    document.getElementById('registrationForm').reset();
-                    document.getElementById('preview').src = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png';
+            // ใช้ XMLHttpRequest แทน fetch
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', 'https://script.google.com/macros/s/AKfycbzrqlbKKLKJ41hamxJfrcOEnoKMWFa-vZGtqZL7btvx7656rs-RZ62sHtBl-1HNirlY/exec', true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        const result = JSON.parse(xhr.responseText);
+                        if (result.success) {
+                            // ล้างข้อมูลในฟอร์ม
+                            document.getElementById('registrationForm').reset();
+                            document.getElementById('preview').src = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png';
 
-                    // แสดง SweetAlert
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'บันทึกข้อมูลเรียบร้อย',
-                        showConfirmButton: false,
-                        timer: 1500
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'เกิดข้อผิดพลาด',
-                        text: result.message,
-                    });
+                            // แสดง SweetAlert
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'บันทึกข้อมูลเรียบร้อย',
+                                showConfirmButton: false,
+                                timer: 1500
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'เกิดข้อผิดพลาด',
+                                text: result.message,
+                            });
+                        }
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'เกิดข้อผิดพลาด',
+                            text: 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์',
+                        });
+                    }
                 }
-            })
-            .catch(error => {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'เกิดข้อผิดพลาด',
-                    text: error.message,
-                });
-            });
-        }
-
-        // ฟังก์ชันสำหรับแปลงไฟล์เป็น Base64
-        function toBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result.split(',')[1]);
-                reader.onerror = (error) => reject(error);
-            });
+            };
+            xhr.send(JSON.stringify(data));
         }
 
         // เพิ่ม Event Listener สำหรับการอัพโหลดรูปภาพ
