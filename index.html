@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ลงทะเบียน</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+</head>
+<body class="bg-gradient-to-br from-gray-100 to-blue-100">
+    <div class="min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-md">
+            <form id="registrationForm" class="bg-white rounded-lg shadow-lg p-6 sm:p-10">
+                <!-- กรอบแสดงรูปภาพ -->
+                <div class="text-center mb-6">
+                    <div class="mx-auto w-32 h-32 mb-4 border rounded-md relative bg-gray-100 shadow-inset">
+                        <img src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png" alt="Default Image" id="preview" class="w-full h-full object-cover rounded-md">
+                    </div>
+                    <label for="file" class="cursor-pointer inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        <img src="https://img.icons8.com/?size=100&id=748&format=png&color=000000" class="w-5 h-5 mr-2">
+                        อัพโหลดรูป
+                        <input type="file" id="file" name="file" accept="image/*" class="hidden">
+                    </label>
+                    <div class="text-xs text-gray-500 mt-2">คลิกเพื่ออัพโหลดรูปของคุณ</div>
+                </div>
+
+                <!-- ช่องสำหรับกรอก Chat ID -->
+                <div class="mb-4">
+                    <label for="userchatId" class="block text-sm font-medium text-gray-700">Chat ID</label>
+                    <input type="text" id="userchatId" name="userchatId" placeholder="Chat ID" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-700 bg-gray-50" required>
+                </div>
+
+                <!-- ช่องสำหรับกรอกชื่อ-สกุล -->
+                <div class="mb-4">
+                    <label for="nameId" class="block text-sm font-medium text-gray-700">ชื่อ-สกุล</label>
+                    <input type="text" id="nameId" name="nameId" placeholder="ชื่อ-สกุล" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-700" required>
+                </div>
+
+                <!-- ช่องสำหรับกรอกเลขรหัสพนักงาน -->
+                <div class="mb-4">
+                    <label for="numberId" class="block text-sm font-medium text-gray-700">เลขรหัสพนักงาน</label>
+                    <input type="text" id="numberId" name="numberId" placeholder="เลขรหัสพนักงาน" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-700" required>
+                </div>
+
+                <!-- ช่องสำหรับกรอกตำแหน่ง -->
+                <div class="mb-6">
+                    <label for="roleId" class="block text-sm font-medium text-gray-700">ตำแหน่ง</label>
+                    <input type="text" id="roleId" name="roleId" placeholder="ตำแหน่ง" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-700" required>
+                </div>
+
+                <!-- ปุ่มสำหรับส่งข้อมูล -->
+                <button type="button" id="submitBtn" class="w-full bg-gradient-to-b from-gray-800 to-gray-900 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-gray-700">
+                    บันทึกข้อมูล
+                </button>
+            </form>
+        </div>
+    </div>
+    <script>
+        // ฟังก์ชันสำหรับแสดงรูปภาพที่อัพโหลด
+        function previewImage() {
+            const fileInput = document.getElementById('file');
+            const imgPreview = document.getElementById('preview');
+
+            if (fileInput.files && fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    imgPreview.src = e.target.result;
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            }
+        }
+
+        // ฟังก์ชันสำหรับส่งข้อมูล
+        async function submitForm() {
+            const fileInput = document.getElementById('file');
+            const userchatId = document.getElementById('userchatId').value;
+            const nameId = document.getElementById('nameId').value;
+            const numberId = document.getElementById('numberId').value;
+            const roleId = document.getElementById('roleId').value;
+
+            // ตรวจสอบว่ามีการอัพโหลดรูปภาพหรือไม่
+            let base64 = '';
+            let fileName = '';
+            let fileType = '';
+
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                base64 = await toBase64(file);
+                fileName = file.name;
+                fileType = file.type;
+            }
+
+            // สร้างข้อมูลที่จะส่ง
+            const data = {
+                userchatId: userchatId,
+                nameId: nameId,
+                numberId: numberId,
+                roleId: roleId,
+                base64: base64,
+                name: fileName,
+                type: fileType
+            };
+
+            // ส่งข้อมูลไปยัง Google Apps Script ผ่าน Webhook
+            fetch('YOUR_GOOGLE_APPS_SCRIPT_WEBHOOK_URL', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    // ล้างข้อมูลในฟอร์ม
+                    document.getElementById('registrationForm').reset();
+                    document.getElementById('preview').src = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png';
+
+                    // แสดง SweetAlert
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'บันทึกข้อมูลเรียบร้อย',
+                        showConfirmButton: false,
+                        timer: 1500
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'เกิดข้อผิดพลาด',
+                        text: result.message,
+                    });
+                }
+            })
+            .catch(error => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'เกิดข้อผิดพลาด',
+                    text: error.message,
+                });
+            });
+        }
+
+        // ฟังก์ชันสำหรับแปลงไฟล์เป็น Base64
+        function toBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = (error) => reject(error);
+            });
+        }
+
+        // เพิ่ม Event Listener สำหรับการอัพโหลดรูปภาพ
+        document.getElementById('file').addEventListener('change', previewImage);
+
+        // เพิ่ม Event Listener ให้ปุ่ม Submit
+        document.getElementById('submitBtn').addEventListener('click', submitForm);
+    </script>
+</body>
+</html>
