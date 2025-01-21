@@ -55,79 +55,94 @@
             </form>
         </div>
     </div>
- <script>
-    async function submitForm() {
-        const submitBtn = document.getElementById('submitBtn');
-        submitBtn.disabled = true; // ป้องกันการคลิกซ้ำ
-
-        try {
-            const userchatId = document.getElementById('userchatId').value;
-            const nameId = document.getElementById('nameId').value;
-            const numberId = document.getElementById('numberId').value;
-            const roleId = document.getElementById('roleId').value;
+    <script>
+        // ฟังก์ชันสำหรับแสดงรูปภาพที่อัพโหลด
+        function previewImage() {
             const fileInput = document.getElementById('file');
+            const imgPreview = document.getElementById('preview');
 
-            // สร้าง FormData object
-            const formData = new FormData();
-            formData.append('userchatId', userchatId);
-            formData.append('nameId', nameId);
-            formData.append('numberId', numberId);
-            formData.append('roleId', roleId);
-
-            if (fileInput.files.length > 0) {
-                formData.append('image', fileInput.files[0]); // เพิ่มไฟล์เข้าไปใน FormData
+            if (fileInput.files && fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    imgPreview.src = e.target.result;
+                };
+                reader.readAsDataURL(fileInput.files[0]);
             }
+        }
 
-            // ส่งข้อมูลไปยังเซิร์ฟเวอร์
-            const response = await fetch('https://railwayserver-production-63b4.up.railway.app/submit', {
-                method: 'POST',
-                body: formData, // ส่ง FormData แทน JSON
-            });
+        // เพิ่ม Event Listener สำหรับการอัพโหลดรูปภาพ
+        document.getElementById('file').addEventListener('change', previewImage);
 
-            const result = await response.json();
+        // ฟังก์ชันสำหรับส่งข้อมูล
+        async function submitForm() {
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true; // ป้องกันการคลิกซ้ำ
 
-            if (result.success) {
-                // ล้างข้อมูลในฟอร์ม
-                document.getElementById('registrationForm').reset();
-                document.getElementById('preview').src = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png';
+            try {
+                const userchatId = document.getElementById('userchatId').value;
+                const nameId = document.getElementById('nameId').value;
+                const numberId = document.getElementById('numberId').value;
+                const roleId = document.getElementById('roleId').value;
+                const fileInput = document.getElementById('file');
 
-                // แสดง SweetAlert
-                Swal.fire({
-                    icon: 'success',
-                    title: 'บันทึกข้อมูลเรียบร้อย',
-                    showConfirmButton: false,
-                    timer: 3000, // แสดงข้อความสำเร็จเป็นเวลา 3 วินาที
-                }).then(() => {
-                    try {
-                        window.close();
-                    } catch (error) {
-                        console.warn('ไม่สามารถปิดแท็บได้:', error);
-                    }
+                // สร้าง FormData object
+                const formData = new FormData();
+                formData.append('userchatId', userchatId);
+                formData.append('nameId', nameId);
+                formData.append('numberId', numberId);
+                formData.append('roleId', roleId);
+
+                if (fileInput.files.length > 0) {
+                    formData.append('image', fileInput.files[0]); // เพิ่มไฟล์เข้าไปใน FormData
+                }
+
+                // ส่งข้อมูลไปยังเซิร์ฟเวอร์
+                const response = await fetch('https://railwayserver-production-63b4.up.railway.app/submit', {
+                    method: 'POST',
+                    body: formData, // ส่ง FormData แทน JSON
                 });
-            } else {
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // ล้างข้อมูลในฟอร์ม
+                    document.getElementById('registrationForm').reset();
+                    document.getElementById('preview').src = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png';
+
+                    // แสดง SweetAlert
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'บันทึกข้อมูลเรียบร้อย',
+                        showConfirmButton: false,
+                        timer: 3000, // แสดงข้อความสำเร็จเป็นเวลา 3 วินาที
+                    }).then(() => {
+                        try {
+                            window.close();
+                        } catch (error) {
+                            console.warn('ไม่สามารถปิดแท็บได้:', error);
+                        }
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'เกิดข้อผิดพลาด',
+                        text: result.message,
+                    });
+                }
+            } catch (error) {
                 Swal.fire({
                     icon: 'error',
                     title: 'เกิดข้อผิดพลาด',
-                    text: result.message,
+                    text: 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์',
                 });
+                console.error(error);
+            } finally {
+                submitBtn.disabled = false; // เปิดปุ่มอีกครั้ง
             }
-        } catch (error) {
-            Swal.fire({
-                icon: 'error',
-                title: 'เกิดข้อผิดพลาด',
-                text: 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์',
-            });
-            console.error(error);
-        } finally {
-            submitBtn.disabled = false; // เปิดปุ่มอีกครั้ง
         }
-    }
 
-    // เพิ่ม Event Listener สำหรับการอัพโหลดรูปภาพ
-    document.getElementById('file').addEventListener('change', previewImage);
-
-    // เพิ่ม Event Listener ให้ปุ่ม Submit
-    document.getElementById('submitBtn').addEventListener('click', submitForm);
-</script>
+        // เพิ่ม Event Listener ให้ปุ่ม Submit
+        document.getElementById('submitBtn').addEventListener('click', submitForm);
+    </script>
 </body>
 </html>
