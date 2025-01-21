@@ -71,80 +71,96 @@
         }
 
         // ฟังก์ชันสำหรับส่งข้อมูล
-        async function submitForm() {
-            const fileInput = document.getElementById('file');
-            const userchatId = document.getElementById('userchatId').value.trim();
-            const nameId = document.getElementById('nameId').value.trim();
-            const numberId = document.getElementById('numberId').value.trim();
-            const roleId = document.getElementById('roleId').value.trim();
+async function submitForm() {
+  const fileInput = document.getElementById('file');
+  const userchatId = document.getElementById('userchatId').value.trim();
+  const nameId = document.getElementById('nameId').value.trim();
+  const numberId = document.getElementById('numberId').value.trim();
+  const roleId = document.getElementById('roleId').value.trim();
 
-            // ตรวจสอบว่าช่องกรอกข้อมูลครบถ้วน
-            if (!userchatId || !nameId || !numberId || !roleId) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'กรอกข้อมูลไม่ครบ',
-                    text: 'กรุณากรอกข้อมูลในทุกช่องก่อนส่ง',
-                });
-                return;
-            }
+  // ตรวจสอบว่าช่องกรอกข้อมูลครบถ้วน
+  if (!userchatId || !nameId || !numberId || !roleId) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'กรอกข้อมูลไม่ครบ',
+      text: 'กรุณากรอกข้อมูลในทุกช่องก่อนส่ง',
+    });
+    return;
+  }
 
-            // ตรวจสอบขนาดไฟล์รูปภาพ
-            if (fileInput.files.length > 0 && fileInput.files[0].size > 2 * 1024 * 1024) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'รูปภาพขนาดใหญ่เกินไป',
-                    text: 'กรุณาอัปโหลดรูปภาพที่มีขนาดไม่เกิน 2 MB',
-                });
-                return;
-            }
+  // ตรวจสอบขนาดไฟล์รูปภาพ
+  if (fileInput.files.length > 0 && fileInput.files[0].size > 2 * 1024 * 1024) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'รูปภาพขนาดใหญ่เกินไป',
+      text: 'กรุณาอัปโหลดรูปภาพที่มีขนาดไม่เกิน 2 MB',
+    });
+    return;
+  }
 
-            // สร้าง FormData เพื่อส่งข้อมูล
-            const formData = new FormData();
-            formData.append('userchatId', userchatId);
-            formData.append('nameId', nameId);
-            formData.append('numberId', numberId);
-            formData.append('roleId', roleId);
-            if (fileInput.files.length > 0) {
-                formData.append('image', fileInput.files[0]);
-            }
+  // แสดงข้อความ "กำลังบันทึก"
+  Swal.fire({
+    title: 'กำลังบันทึก',
+    text: 'กรุณารอสักครู่...',
+    allowOutsideClick: false,
+    didOpen: () => {
+      Swal.showLoading();
+    }
+  });
 
-            try {
-                const response = await fetch('https://railwayserver-production-63b4.up.railway.app/submit', {
-                    method: 'POST',
-                    body: formData,
-                });
+  // สร้าง FormData เพื่อส่งข้อมูล
+  const formData = new FormData();
+  formData.append('userchatId', userchatId);
+  formData.append('nameId', nameId);
+  formData.append('numberId', numberId);
+  formData.append('roleId', roleId);
+  if (fileInput.files.length > 0) {
+    formData.append('image', fileInput.files[0]);
+  }
 
-                const result = await response.json();
+  try {
+    const response = await fetch('https://railwayserver-production-63b4.up.railway.app/submit', {
+      method: 'POST',
+      body: formData,
+    });
 
-                if (result.success) {
-                    document.getElementById('registrationForm').reset();
-                    document.getElementById('preview').src = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png';
+    const result = await response.json();
 
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'บันทึกข้อมูลเรียบร้อย',
-                        showConfirmButton: false,
-                        timer: 3000
-                    });
+    // ปิดข้อความ "กำลังบันทึก"
+    Swal.close();
 
-                    setTimeout(() => {
-                        window.close();
-                    }, 3000);
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'เกิดข้อผิดพลาด',
-                        text: result.message,
-                    });
-                }
-            } catch (error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'เกิดข้อผิดพลาด',
-                    text: 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้',
-                });
-            }
-        }
+    if (result.success) {
+      document.getElementById('registrationForm').reset();
+      document.getElementById('preview').src = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png';
+
+      Swal.fire({
+        icon: 'success',
+        title: 'บันทึกข้อมูลเรียบร้อย',
+        showConfirmButton: false,
+        timer: 5000
+      });
+
+      setTimeout(() => {
+        window.close();
+      }, 5000);
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: 'เกิดข้อผิดพลาด',
+        text: result.message,
+      });
+    }
+  } catch (error) {
+    // ปิดข้อความ "กำลังบันทึก"
+    Swal.close();
+
+    Swal.fire({
+      icon: 'error',
+      title: 'เกิดข้อผิดพลาด',
+      text: 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้',
+    });
+  }
+}
 
         // เพิ่ม Event Listener สำหรับการอัพโหลดรูปภาพ
         document.getElementById('file').addEventListener('change', previewImage);
